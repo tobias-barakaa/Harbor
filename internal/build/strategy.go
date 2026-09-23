@@ -19,11 +19,10 @@ type Strategy interface {
 	Build(workDir string, a app.Application) (Result, error)
 }
 
-// Registry holds every build strategy, tried in order. Only Node.js is
-// wired up for now — Python and Go follow the same interface once
-// this one's proven out.
+// Registry holds every build strategy, tried in order.
 var Registry = []Strategy{
 	nodeStrategy{},
+	pythonStrategy{},
 }
 
 // For finds the first strategy that can handle the given Application.
