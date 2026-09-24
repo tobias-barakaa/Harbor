@@ -33,6 +33,8 @@ func main() {
 		cmdStop()
 	case "restart":
 		cmdRestart()
+	case "server":
+		cmdServer(os.Args[2:])
 	default:
 		printUsage()
 		os.Exit(1)
@@ -47,7 +49,8 @@ func printUsage() {
   deployer status  <app-name>
   deployer logs    <app-name> [--follow]
   deployer stop    <app-name>
-  deployer restart <app-name>`)
+  deployer restart <app-name>
+  deployer server  add|list|remove|test|exec|upload ...`)
 }
 
 func resolveApp(target string, rest []string) (app.Application, error) {
