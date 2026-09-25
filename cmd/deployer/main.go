@@ -35,6 +35,8 @@ func main() {
 		cmdRestart()
 	case "server":
 		cmdServer(os.Args[2:])
+	case "deploy":
+		cmdDeploy(os.Args[2:])
 	default:
 		printUsage()
 		os.Exit(1)
@@ -50,7 +52,9 @@ func printUsage() {
   deployer logs    <app-name> [--follow]
   deployer stop    <app-name>
   deployer restart <app-name>
-  deployer server  add|list|remove|test|exec|upload ...`)
+  deployer server  add|list|remove|test|exec|upload ...
+  deployer deploy  <path-to-zip-or-directory> --server <name> [--app name] [--port ...] [--volume ...] [--env ...]
+  deployer deploy  status|logs|stop|restart|remove|list ...`)
 }
 
 func resolveApp(target string, rest []string) (app.Application, error) {
@@ -156,8 +160,6 @@ func cmdRun() {
 		os.Exit(1)
 	}
 
-	// workDir is intentionally not cleaned up here — the app needs it
-	// to keep existing after this command returns.
 	workDir, _, err := workspace.Prepare(target, a)
 	if err != nil {
 		fmt.Println("Error preparing workspace:", err)
@@ -175,7 +177,7 @@ func cmdRun() {
 		fmt.Println("Failed to start:", err)
 		os.Exit(1)
 	}
-	fmt.Printf("Started %q (pid group %d)\n", a.Name, os.Getpid())
+	fmt.Printf("Started %q\n", a.Name)
 }
 
 func cmdStatus() {
