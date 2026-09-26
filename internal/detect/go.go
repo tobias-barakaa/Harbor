@@ -1,3 +1,4 @@
+// go.go
 package detect
 
 import "deployer/internal/app"
@@ -11,6 +12,7 @@ func (goDetector) Detect(root string, files map[string]bool) (app.Application, b
 	return app.Application{
 		ProjectRoot: root,
 		Runtime:     app.RuntimeGo,
+		Strategy:    app.StrategyServer,
 		Port:        8080,
 		Markers:     []string{"go.mod"},
 	}, true

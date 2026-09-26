@@ -8,16 +8,11 @@ import (
 	"deployer/internal/app"
 )
 
-// EnsureDockerfile returns the path to a Dockerfile inside workDir,
-// writing one if the project doesn't already ship its own. A
-// project's own Dockerfile always wins — generation only fills the
-// gap for runtimes detect/ already recognizes.
 func EnsureDockerfile(workDir string, a app.Application) (string, error) {
 	path := filepath.Join(workDir, "Dockerfile")
 	if _, err := os.Stat(path); err == nil {
 		return path, nil
 	}
-
 	content, err := generate(workDir, a)
 	if err != nil {
 		return "", err
@@ -42,6 +37,9 @@ func generate(workDir string, a app.Application) (string, error) {
 }
 
 func nodeDockerfile(a app.Application) string {
+	if a.Strategy == app.StrategyStatic {
+		return staticNodeDockerfile(a)
+	}
 	return fmt.Sprintf(`FROM node:20-alpine
 WORKDIR /app
 COPY package*.json ./
@@ -50,6 +48,35 @@ COPY . .
 EXPOSE %d
 CMD ["npm", "start"]
 `, a.Port)
+}
+
+// staticNodeDockerfile builds in a full Node stage (the framework's
+// build command needs devDependencies) and serves ONLY the output
+// directory from a separate, much smaller nginx stage — the final
+// image never carries node_modules or the framework's toolchain.
+// The container always listens on 80 (nginx's default) regardless of
+// a.Port — a.Port is the public-facing port this gets mapped to
+// (handled by deploy.Run), not anything inside the container itself.
+func staticNodeDockerfile(a app.Application) string {
+	outputDir := a.OutputDir
+	if outputDir == "" {
+		outputDir = "dist"
+	}
+	buildCmd := a.BuildCmd
+	if buildCmd == "" {
+		buildCmd = "npm run build"
+	}
+	return fmt.Sprintf(`FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN %s
+
+FROM nginx:alpine
+COPY --from=build /app/%s /usr/share/nginx/html
+EXPOSE 80
+`, buildCmd, outputDir)
 }
 
 func pythonDockerfile(workDir string, a app.Application) string {
@@ -66,9 +93,6 @@ EXPOSE %d
 `, deps, a.Port, pythonCMD(workDir, a.Port))
 }
 
-// pythonCMD special-cases Django (manage.py runserver needs the bind
-// address and port as explicit args, unlike a plain script) and
-// otherwise falls back to the first recognized entry filename.
 func pythonCMD(workDir string, port int) string {
 	if exists(filepath.Join(workDir, "manage.py")) {
 		return fmt.Sprintf(`CMD ["python", "manage.py", "runserver", "0.0.0.0:%d"]`, port)
@@ -78,12 +102,9 @@ func pythonCMD(workDir string, port int) string {
 			return fmt.Sprintf(`CMD ["python", "%s"]`, candidate)
 		}
 	}
-	return `CMD ["python", "app.py"]` // best-effort default; fails loudly in container logs if wrong
+	return `CMD ["python", "app.py"]`
 }
 
-// goDockerfile is a multi-stage build: the compiled binary is copied
-// into a bare alpine image, so the final container doesn't carry the
-// entire Go toolchain — just the ~10MB binary and a minimal base.
 func goDockerfile(a app.Application) string {
 	return fmt.Sprintf(`FROM golang:1.22-alpine AS build
 WORKDIR /app

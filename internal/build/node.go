@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 
 	"deployer/internal/app"
 )
@@ -18,9 +19,6 @@ func (nodeStrategy) CanHandle(a app.Application) bool {
 	return a.Runtime == app.RuntimeNode
 }
 
-// packageJSON is the subset of package.json we actually need: which
-// scripts exist, so we know whether there's a build step and how to
-// start the app afterward.
 type packageJSON struct {
 	Scripts map[string]string `json:"scripts"`
 }
@@ -28,27 +26,49 @@ type packageJSON struct {
 func (nodeStrategy) Build(workDir string, a app.Application) (Result, error) {
 	var logBuf bytes.Buffer
 
-	pkg, err := readPackageJSON(workDir)
-	if err != nil {
-		return Result{}, err
-	}
-
 	installCmd := packageManagerInstallCmd(workDir)
 	if err := runStep(workDir, &logBuf, installCmd[0], installCmd[1:]...); err != nil {
 		return Result{Success: false, Log: logBuf.String()}, err
 	}
 
-	if _, hasBuild := pkg.Scripts["build"]; hasBuild {
-		if err := runStep(workDir, &logBuf, "npm", "run", "build"); err != nil {
+	buildCmd := a.BuildCmd
+	if buildCmd == "" {
+		// No framework-specific build command — fall back to
+		// package.json's own "build" script, same behavior as before
+		// framework detection existed.
+		if pkg, err := readPackageJSON(workDir); err == nil {
+			if _, hasBuild := pkg.Scripts["build"]; hasBuild {
+				buildCmd = "npm run build"
+			}
+		}
+	}
+	if buildCmd != "" {
+		if err := runStep(workDir, &logBuf, "sh", "-c", buildCmd); err != nil {
 			return Result{Success: false, Log: logBuf.String()}, err
 		}
 	}
 
+	if a.Strategy == app.StrategyStatic {
+		// Nothing to "start" — serve the build output. `npx serve`
+		// is the standard zero-config static file server, so there's
+		// no separate install step needed for it.
+		outputDir := a.OutputDir
+		if outputDir == "" {
+			outputDir = "dist"
+		}
+		return Result{
+			Success:   true,
+			StartCmd:  "npx",
+			StartArgs: []string{"serve", outputDir, "-l", strconv.Itoa(a.Port)},
+			Log:       logBuf.String(),
+		}, nil
+	}
+
 	startCmd, startArgs := "npm", []string{"start"}
-	if _, hasStart := pkg.Scripts["start"]; !hasStart {
-		// No "start" script — fall back to running the entry file
-		// directly rather than a "npm start" that's guaranteed to fail.
-		startCmd, startArgs = "node", []string{entryFile(workDir)}
+	if pkg, err := readPackageJSON(workDir); err == nil {
+		if _, hasStart := pkg.Scripts["start"]; !hasStart {
+			startCmd, startArgs = "node", []string{entryFile(workDir)}
+		}
 	}
 
 	return Result{
@@ -71,10 +91,6 @@ func readPackageJSON(workDir string) (packageJSON, error) {
 	return pkg, nil
 }
 
-// packageManagerInstallCmd picks npm/pnpm/yarn based on which lockfile
-// is present, since that's the strongest signal of what the project
-// actually expects — installing with the wrong one can produce a
-// different dependency tree than what was tested.
 func packageManagerInstallCmd(workDir string) []string {
 	if exists(filepath.Join(workDir, "pnpm-lock.yaml")) {
 		return []string{"pnpm", "install"}
@@ -91,7 +107,7 @@ func entryFile(workDir string) string {
 			return candidate
 		}
 	}
-	return "index.js" // best-effort default; will fail loudly if wrong, which is fine
+	return "index.js"
 }
 
 func exists(path string) bool {

@@ -85,10 +85,32 @@ func Run(spec Spec) (Deployment, error) {
 
 	client.Exec(docker.RemoveCommand(containerName)) // idempotent — ignore result
 
+	// ports := spec.Ports
+	// if len(ports) == 0 {
+	// 	ports = []docker.PortMapping{{Host: a.Port, Container: a.Port}}
+	// }
+
+	// if err := runOrFail(client, docker.RunCommand(containerName, image, ports, spec.Volumes, spec.Env)); err != nil {
+	// 	return Deployment{}, fmt.Errorf("docker run: %w", err)
+	// }
+	
 	ports := spec.Ports
-	if len(ports) == 0 {
-		ports = []docker.PortMapping{{Host: a.Port, Container: a.Port}}
-	}
+if len(ports) == 0 {
+    ports = []docker.PortMapping{
+        {Host: a.Port, Container: docker.ContainerPort(a)},
+    }
+}
+
+	// ports := spec.Ports
+	// if len(ports) == 0 {
+	// 	containerPort := a.Port
+	// 	if a.Strategy == app.StrategyStatic {
+	// 		// Static apps are served by nginx inside the container,
+	// 		// which always listens on 80 — see staticNodeDockerfile.
+	// 		containerPort = 80
+	// 	}
+	// 	ports = []docker.PortMapping{{Host: a.Port, Container: containerPort}}
+	// }
 
 	if err := runOrFail(client, docker.RunCommand(containerName, image, ports, spec.Volumes, spec.Env)); err != nil {
 		return Deployment{}, fmt.Errorf("docker run: %w", err)

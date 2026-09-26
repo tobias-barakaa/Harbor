@@ -1,3 +1,4 @@
+// python.go
 package detect
 
 import "deployer/internal/app"
@@ -18,6 +19,7 @@ func (pythonDetector) Detect(root string, files map[string]bool) (app.Applicatio
 	return app.Application{
 		ProjectRoot: root,
 		Runtime:     app.RuntimePython,
+		Strategy:    app.StrategyServer,
 		Port:        8000,
 		Markers:     markers,
 	}, true

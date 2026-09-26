@@ -9,6 +9,33 @@ const (
 	RuntimeUnknown Runtime = "Unknown"
 )
 
+// Framework identifies a specific framework within a runtime, when
+// one is recognized. Empty means "plain <Runtime>, no framework
+// detected" — not an error, just less specific information.
+type Framework string
+
+const (
+	FrameworkAstro Framework = "Astro"
+	FrameworkNext  Framework = "Next.js"
+	FrameworkVite  Framework = "Vite"
+)
+
+// Strategy describes how the BUILT application is meant to run —
+// which is what actually determines the Dockerfile shape, not the
+// language runtime by itself. An Astro app and an Express app are
+// both "Node.js", but one produces a directory of static files with
+// nothing to execute, and the other is a long-running process.
+type Strategy string
+
+const (
+	// StrategyServer: the build output IS the running application —
+	// a long-lived process listens on Port.
+	StrategyServer Strategy = "server"
+	// StrategyStatic: the build output is a directory of static
+	// files with nothing to execute — any web server can serve it.
+	StrategyStatic Strategy = "static"
+)
+
 type DeploymentMethod string
 
 const (
@@ -16,14 +43,20 @@ const (
 	DeploymentStandard DeploymentMethod = "Standard"
 )
 
-// Application describes one detected project inside an inspected archive.
-// A single zip can produce more than one of these (e.g. a frontend and
-// a backend living in separate subdirectories).
 type Application struct {
-	Name             string
-	ProjectRoot      string // directory inside the archive; "" means the zip root
-	Runtime          Runtime
-	Port             int
+	Name        string
+	ProjectRoot string
+	Runtime     Runtime
+	Framework   Framework // "" if none recognized
+	Strategy    Strategy
+	BuildCmd    string // "" if there's no separate build step
+	OutputDir   string // only meaningful when Strategy == StrategyStatic
+
+	// Port is the external port the deployed application should be
+// reachable on. The Docker deployment layer decides which internal
+// container port this maps to based on the application's strategy.
+Port int
+
 	DeploymentMethod DeploymentMethod
-	Markers          []string // files that triggered detection, e.g. "package.json"
+	Markers          []string
 }
