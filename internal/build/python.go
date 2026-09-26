@@ -80,12 +80,18 @@ func pythonStartCommand(workDir string, a app.Application) (string, []string, er
 		return python, []string{"manage.py", "runserver", fmt.Sprintf("0.0.0.0:%d", a.Port)}, nil
 	}
 
-	for _, candidate := range []string{"app.py", "main.py", "run.py", "wsgi.py"} {
+	// for _, candidate := range []string{"app.py", "main.py", "run.py", "wsgi.py"} {
+	// 	if exists(filepath.Join(workDir, candidate)) {
+	// 		return python, []string{candidate}, nil
+	// 	}
+	// }
+
+	for _, candidate := range []string{"app.py", "main.py", "run.py", "server.py", "wsgi.py"} {
 		if exists(filepath.Join(workDir, candidate)) {
 			return python, []string{candidate}, nil
 		}
 	}
 
 	return "", nil, fmt.Errorf(
-		"no recognizable Python entry point found (looked for manage.py, app.py, main.py, run.py, wsgi.py)")
+		"no recognizable Python entry point found (looked for manage.py, app.py, main.py, run.py, server.py, wsgi.py)")
 }

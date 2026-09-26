@@ -97,7 +97,7 @@ func pythonCMD(workDir string, port int) string {
 	if exists(filepath.Join(workDir, "manage.py")) {
 		return fmt.Sprintf(`CMD ["python", "manage.py", "runserver", "0.0.0.0:%d"]`, port)
 	}
-	for _, candidate := range []string{"app.py", "main.py", "run.py", "wsgi.py"} {
+	for _, candidate := range []string{"app.py", "main.py", "run.py", "server.py", "wsgi.py"} {
 		if exists(filepath.Join(workDir, candidate)) {
 			return fmt.Sprintf(`CMD ["python", "%s"]`, candidate)
 		}
