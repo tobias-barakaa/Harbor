@@ -1,0 +1,15 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #0f1115; color: #e6e6e6; }
+.shell { display: flex; height: 100vh; }
+.sidebar { width: 200px; background: #161922; padding: 16px 0; display: flex; flex-direction: column; }
+.sidebar-title { padding: 0 16px 16px; font-weight: 600; font-size: 18px; }
+.sidebar-item { background: none; border: none; color: #b3b8c4; text-align: left; padding: 10px 16px; cursor: pointer; font-size: 14px; }
+.sidebar-item:hover { background: #1e2230; }
+.sidebar-item.active { background: #262b3d; color: #fff; border-left: 3px solid #5b8def; }
+.content { flex: 1; padding: 24px; overflow-y: auto; }
+.view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.actions button { margin-left: 8px; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.card { background: #1a1e29; border-radius: 8px; padding: 16px; }
+.muted { color: #7d8394; }
+.error { color: #f36; }
