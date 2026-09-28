@@ -7,9 +7,28 @@ body { margin: 0; font-family: system-ui, sans-serif; background: #0f1115; color
 .sidebar-item:hover { background: #1e2230; }
 .sidebar-item.active { background: #262b3d; color: #fff; border-left: 3px solid #5b8def; }
 .content { flex: 1; padding: 24px; overflow-y: auto; }
-.view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.actions button { margin-left: 8px; }
-.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-.card { background: #1a1e29; border-radius: 8px; padding: 16px; }
-.muted { color: #7d8394; }
-.error { color: #f36; }
+.view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; }
+.actions { display: flex; gap: 8px; align-items: center; }
+button { background: #262b3d; color: #e6e6e6; border: 1px solid #333a4d; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+button:hover:not(:disabled) { background: #313749; }
+button:disabled { opacity: 0.5; cursor: default; }
+button.danger { border-color: #6b2b3a; color: #f3799a; }
+button.danger:hover:not(:disabled) { background: #3a1f26; }
+input, select { background: #1a1e29; border: 1px solid #333a4d; color: #e6e6e6; border-radius: 4px; padding: 6px 8px; font-size: 13px; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.card { background: #1a1e29; border-radius: 6px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+.card h3 { margin: 0 0 4px; font-size: 15px; }
+.card-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.muted { color: #7d8394; font-size: 13px; }
+.error { color: #f36; font-size: 13px; }
+.path { font-family: monospace; font-size: 11px; word-break: break-all; }
+.panel { background: #161922; border: 1px solid #262b3d; border-radius: 6px; padding: 14px; margin-bottom: 16px; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.status-badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.03em; width: fit-content; }
+.status-running, .status-connected { background: #16331f; color: #4ade80; }
+.status-stopped, .status-failed { background: #331c1c; color: #f87171; }
+.status-not_found, .status-unknown { background: #26282f; color: #9199a8; }
+.status-testing { background: #332c16; color: #facc15; }
+.log-viewer { background: #0a0c10; border: 1px solid #262b3d; border-radius: 6px; padding: 10px; height: 60vh; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 12px; }
+.log-line { white-space: pre-wrap; word-break: break-all; line-height: 1.4; }
+.scroll-to-bottom { margin-top: 8px; }
